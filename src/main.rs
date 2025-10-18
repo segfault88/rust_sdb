@@ -1,5 +1,6 @@
 use anyhow::Result;
 use bincode::{config::standard, encode_into_std_write};
+use clap::{Parser, Subcommand};
 use game_data::Game;
 use game_data::GameMap;
 use rand::{rng, seq::IteratorRandom};
@@ -12,7 +13,44 @@ mod game_data;
 
 const SAMPLE_SIZE: usize = 1_000;
 
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+pub struct Cli {
+    // This field holds the parsed subcommand and its arguments
+    #[clap(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    /// Read data/games.json, filter some of the dodgey stuff, take random sample and save into new files
+    CreateSample {
+        /// The number of random items to select
+        #[clap(short, long, default_value_t = 1000)]
+        count: usize,
+    },
+
+    /// Try pushing some stuff to fs
+    TestFS {},
+}
+
 fn main() -> Result<()> {
+    let cli = Cli::parse();
+
+    return match cli.command {
+        Commands::CreateSample { count } => {
+            println!("create sample");
+            create_sample(count)
+        }
+        Commands::TestFS {} => test_fs(),
+    };
+}
+
+fn test_fs() -> Result<()> {
+    Ok(())
+}
+
+fn create_sample(count: usize) -> Result<()> {
     println!("reading games.json");
 
     let start = Instant::now();
@@ -63,12 +101,12 @@ fn main() -> Result<()> {
         Instant::now().duration_since(start)
     );
 
-    save_sample(&games)?;
+    save_sample(&games, count)?;
 
     Ok(())
 }
 
-fn save_sample(games: &GameMap) -> Result<()> {
+fn save_sample(games: &GameMap, count: usize) -> Result<()> {
     let start = Instant::now();
     let mut rng = rng();
 
@@ -88,7 +126,7 @@ fn save_sample(games: &GameMap) -> Result<()> {
 
     let start = Instant::now();
 
-    let f = File::create(format!("data/sample_{}.json", SAMPLE_SIZE))?;
+    let f = File::create(format!("data/sample_{}.json", count))?;
 
     serde_json::to_writer_pretty(f, &sample)?;
 
@@ -99,7 +137,7 @@ fn save_sample(games: &GameMap) -> Result<()> {
 
     let start = Instant::now();
 
-    let mut f = File::create(format!("data/sample_{}.bin", SAMPLE_SIZE))?;
+    let mut f = File::create(format!("data/sample_{}.bin", count))?;
 
     encode_into_std_write(&sample, &mut f, standard())?;
 
