@@ -1,17 +1,17 @@
 use anyhow::Result;
-use bincode::{config::standard, encode_into_std_write};
+use bincode::{config::standard, decode_from_std_read, encode_into_std_write};
 use clap::{Parser, Subcommand};
+use firestore::*;
 use game_data::Game;
 use game_data::GameMap;
 use rand::{rng, seq::IteratorRandom};
+use rustls::crypto::CryptoProvider;
 use serde_json::{from_reader, to_writer_pretty};
 use std::collections::HashMap;
 use std::fs::File;
 use std::time::Instant;
 
 mod game_data;
-
-const SAMPLE_SIZE: usize = 1_000;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -34,7 +34,13 @@ pub enum Commands {
     TestFS {},
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
+    if let Err(e) = CryptoProvider::install_default(rustls::crypto::ring::default_provider()) {
+        // Only panic if the installation fails, which shouldn't happen here
+        eprintln!("Failed to install rustls crypto provider: {:?}", e);
+    }
+
     let cli = Cli::parse();
 
     return match cli.command {
@@ -42,11 +48,43 @@ fn main() -> Result<()> {
             println!("create sample");
             create_sample(count)
         }
-        Commands::TestFS {} => test_fs(),
+        Commands::TestFS {} => test_fs().await,
     };
 }
 
-fn test_fs() -> Result<()> {
+async fn test_fs() -> Result<()> {
+    let mut f = File::open("data/sample_1000.bin")?;
+    let games: GameMap = decode_from_std_read(&mut f, standard())?;
+
+    println!("loaded {} games", games.len());
+
+    let project_id: String = std::env::var_os("PROJECT_ID")
+        .expect("set PROJECT_ID env")
+        .into_string()
+        .unwrap();
+
+    let firestore = FirestoreDb::with_options_service_account_key_file(
+        FirestoreDbOptions::new(project_id).with_database_id("sdb-database2".into()),
+        ".key.json".into(),
+    )
+    .await?;
+
+    println!("listing collection ids");
+
+    let list = firestore
+        .list_collection_ids(FirestoreListCollectionIdsParams {
+            parent: None,
+            page_size: 100,
+            page_token: None,
+        })
+        .await?;
+
+    println!("collections:");
+
+    for collection_id in list.collection_ids {
+        println!("collection_id: {}", collection_id);
+    }
+
     Ok(())
 }
 
