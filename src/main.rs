@@ -58,7 +58,7 @@ async fn main() -> Result<()> {
 
 async fn test_fs() -> Result<()> {
     let mut f = File::open("data/sample_1000.bin")?;
-    let games: GameMap = decode_from_std_read(&mut f, standard())?;
+    let mut games: GameMap = decode_from_std_read(&mut f, standard())?;
 
     println!("loaded {} games", games.len());
 
@@ -90,7 +90,9 @@ async fn test_fs() -> Result<()> {
     }
 
     let bar = ProgressBar::new(games.len() as u64);
-    for game in games.values() {
+    for (id, game) in games.iter_mut() {
+        game.steam_app_id = Some(*id);
+
         bar.inc(1);
         let _result = db
             .fluent()

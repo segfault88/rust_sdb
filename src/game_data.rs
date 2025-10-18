@@ -7,6 +7,10 @@ pub type GameMap = HashMap<u64, Game>;
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, Encode, Decode)]
 #[serde(rename_all = "camelCase")]
 pub struct Game {
+    #[serde(alias = "_firestore_id")]
+    id: Option<String>,
+    #[serde(rename = "steam_app_id")]
+    pub steam_app_id: Option<u64>,
     pub name: String,
     #[serde(rename = "release_date")]
     pub release_date: String,
