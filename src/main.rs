@@ -1,7 +1,9 @@
 use anyhow::Result;
+use game_data::Game;
 use game_data::GameMap;
 use rand::{rng, seq::IteratorRandom};
-use serde_json::from_reader;
+use serde_json::{from_reader, to_writer_pretty};
+use std::collections::HashMap;
 use std::fs::File;
 use std::time::Instant;
 
@@ -17,9 +19,38 @@ fn main() -> Result<()> {
     let f = File::open("data/games.json")?;
     let games: game_data::GameMap = from_reader(f)?;
 
+    let total_count = games.len();
+
     println!(
         "read games map, len: {:?} in {:?}",
-        games.len(),
+        total_count,
+        Instant::now().duration_since(start)
+    );
+
+    let start = Instant::now();
+
+    let games: HashMap<u64, Game> = games
+        .iter()
+        .filter(|(_, game)| !game.notes.contains("sexual"))
+        .map(|(id, game)| (*id, game.clone()))
+        .collect();
+
+    let filtered_count = games.len();
+
+    println!(
+        "filtered out {} games, remaining {}, in {:?}",
+        total_count - filtered_count,
+        filtered_count,
+        Instant::now().duration_since(start)
+    );
+
+    let start = Instant::now();
+
+    let f = File::create("data/games_filtered.json")?;
+    to_writer_pretty(f, &games)?;
+
+    println!(
+        "saved filtered game list in {:?}",
         Instant::now().duration_since(start)
     );
 
@@ -53,7 +84,7 @@ fn save_sample(games: &GameMap) -> Result<()> {
     serde_json::to_writer_pretty(f, &sample)?;
 
     println!(
-        "sameple saved to file in {:?}",
+        "sample saved to file in {:?}",
         Instant::now().duration_since(start)
     );
 
