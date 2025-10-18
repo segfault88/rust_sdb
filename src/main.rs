@@ -1,4 +1,5 @@
 use anyhow::Result;
+use bincode::{config::standard, encode_into_std_write};
 use game_data::Game;
 use game_data::GameMap;
 use rand::{rng, seq::IteratorRandom};
@@ -45,12 +46,20 @@ fn main() -> Result<()> {
     );
 
     let start = Instant::now();
-
     let f = File::create("data/games_filtered.json")?;
     to_writer_pretty(f, &games)?;
 
     println!(
         "saved filtered game list in {:?}",
+        Instant::now().duration_since(start)
+    );
+
+    let start = Instant::now();
+    let mut f = File::create("data/games_filtered.bin")?;
+    encode_into_std_write(&games, &mut f, standard())?;
+
+    println!(
+        "saved filtered game list bincode in {:?}",
         Instant::now().duration_since(start)
     );
 
@@ -82,6 +91,17 @@ fn save_sample(games: &GameMap) -> Result<()> {
     let f = File::create(format!("data/sample_{}.json", SAMPLE_SIZE))?;
 
     serde_json::to_writer_pretty(f, &sample)?;
+
+    println!(
+        "sample saved to file in {:?}",
+        Instant::now().duration_since(start)
+    );
+
+    let start = Instant::now();
+
+    let mut f = File::create(format!("data/sample_{}.bin", SAMPLE_SIZE))?;
+
+    encode_into_std_write(&sample, &mut f, standard())?;
 
     println!(
         "sample saved to file in {:?}",

@@ -1,5 +1,5 @@
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize, de};
-use serde_json::Value;
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -9,7 +9,7 @@ use std::rc::Rc;
 
 pub type GameMap = HashMap<u64, Game>;
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, Encode, Decode)]
 #[serde(rename_all = "camelCase")]
 pub struct Game {
     pub name: String,
@@ -47,7 +47,7 @@ pub struct Game {
     #[serde(rename = "supported_languages")]
     pub supported_languages: Vec<String>,
     #[serde(rename = "full_audio_languages")]
-    pub full_audio_languages: Vec<Value>,
+    pub full_audio_languages: Vec<Rc<String>>,
     pub packages: Vec<Package>,
     pub developers: Vec<Rc<String>>,
     pub publishers: Vec<Rc<String>>,
@@ -77,7 +77,7 @@ pub struct Game {
     pub tags: HashMap<Rc<String>, u64>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, Encode, Decode)]
 #[serde(rename_all = "camelCase")]
 pub struct Package {
     pub title: String,
@@ -85,7 +85,7 @@ pub struct Package {
     pub subs: Vec<Sub>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, Encode, Decode)]
 #[serde(rename_all = "camelCase")]
 pub struct Sub {
     pub text: String,
@@ -112,7 +112,7 @@ where
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Encode, Decode)]
 #[serde(untagged)] // This is the key: Serde tries each variant in order
 pub enum StringOrU64 {
     String(String),
