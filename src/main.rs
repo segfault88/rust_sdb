@@ -115,7 +115,8 @@ fn is_dodgy(game: &Game) -> bool {
             .unwrap()
     });
 
-    RE.is_match(&game.name)
+    game.tags.keys().any(|key| key.contains("entai"))
+        || RE.is_match(&game.name)
         || RE.is_match(&game.notes)
         || RE.is_match(&game.short_description)
         || RE.is_match(&game.detailed_description)
@@ -124,7 +125,10 @@ fn is_dodgy(game: &Game) -> bool {
         || RE.is_match(&game.support_url)
         || RE.is_match(&game.support_email)
         || RE.is_match(&game.reviews)
-        || game.tags.keys().any(|key| key.contains("entai"))
+        || game
+            .publishers
+            .iter()
+            .any(|publisher| RE.is_match(publisher))
 }
 
 fn create_sample(count: usize) -> Result<()> {
