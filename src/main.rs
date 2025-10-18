@@ -6,10 +6,13 @@ use game_data::Game;
 use game_data::GameMap;
 use indicatif::ProgressBar;
 use rand::{rng, seq::IteratorRandom};
+use regex::Regex;
+use regex::RegexBuilder;
 use rustls::crypto::CryptoProvider;
 use serde_json::{from_reader, to_writer_pretty};
 use std::collections::HashMap;
 use std::fs::File;
+use std::sync::LazyLock;
 use std::time::Instant;
 
 mod game_data;
@@ -103,6 +106,27 @@ async fn test_fs() -> Result<()> {
     Ok(())
 }
 
+fn is_dodgy(game: &Game) -> bool {
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        RegexBuilder::new(r"entai|exual|exy|🔞")
+            .case_insensitive(true)
+            .unicode(true)
+            .build()
+            .unwrap()
+    });
+
+    RE.is_match(&game.name)
+        || RE.is_match(&game.notes)
+        || RE.is_match(&game.short_description)
+        || RE.is_match(&game.detailed_description)
+        || RE.is_match(&game.about_the_game)
+        || RE.is_match(&game.website)
+        || RE.is_match(&game.support_url)
+        || RE.is_match(&game.support_email)
+        || RE.is_match(&game.reviews)
+        || game.tags.keys().any(|key| key.contains("entai"))
+}
+
 fn create_sample(count: usize) -> Result<()> {
     println!("reading games.json");
 
@@ -123,7 +147,7 @@ fn create_sample(count: usize) -> Result<()> {
 
     let games: HashMap<u64, Game> = games
         .iter()
-        .filter(|(_, game)| !game.notes.contains("sexual"))
+        .filter(|(_, game)| !is_dodgy(game))
         .map(|(id, game)| (*id, game.clone()))
         .collect();
 
