@@ -8,6 +8,7 @@ anyhow = "1.0.100"
 bincode = { version = "2.0.1", features = ["serde"] }
 clap = { version = "4.5.49", features = ["derive"] }
 firestore = { version = "0.47.0", features = ["caching", "caching-memory"] }
+indicatif = "0.18.0"
 rand = "0.9.2"
 rustls = { version = "0.23.33", features = ["ring"] }
 serde = { version = "1.0.228", features = ["serde_derive", "rc"] }

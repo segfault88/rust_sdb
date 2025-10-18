@@ -4,6 +4,7 @@ use clap::{Parser, Subcommand};
 use firestore::*;
 use game_data::Game;
 use game_data::GameMap;
+use indicatif::ProgressBar;
 use rand::{rng, seq::IteratorRandom};
 use rustls::crypto::CryptoProvider;
 use serde_json::{from_reader, to_writer_pretty};
@@ -85,18 +86,19 @@ async fn test_fs() -> Result<()> {
         println!("collection_id: {}", collection_id);
     }
 
-    let game = games.values().next().unwrap();
-
-    let _result = db
-        .fluent()
-        .insert()
-        .into("test")
-        .generate_document_id()
-        .object(game)
-        .execute::<Game>()
-        .await?;
-
-    println!("result: {:?}", _result);
+    let bar = ProgressBar::new(games.len() as u64);
+    for game in games.values() {
+        bar.inc(1);
+        let _result = db
+            .fluent()
+            .insert()
+            .into("test")
+            .generate_document_id()
+            .object(game)
+            .execute::<Game>()
+            .await?;
+    }
+    bar.finish();
 
     Ok(())
 }
