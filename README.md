@@ -2,11 +2,11 @@ Simple tools for messing around with Steam Games Dataset from https://huggingfac
 
 ```
 reading games.json
-read games map, len: 111452 in 237.87182175s
-filtered out 5265 games, remaining 106187, in 436.483833ms
-saved filtered game list in 113.572819333s
-saved filtered game list bincode in 20.935586875s
-sampled 1000 random games in 4.034541ms
-sample saved to file in 760.704709ms
-sample saved to file in 164.435125ms
+read games map, len: 111452 in 241.19187525s
+filtered out 5530 games, remaining 105922, in 289.4375ms
+saved filtered game list in 112.84774475s
+saved filtered game list bincode in 21.389697708s
+sampled 1000 random games in 2.918417ms
+sample saved to file in 747.434583ms
+sample saved to file in 165.342792ms
 ```
