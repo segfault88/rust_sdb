@@ -63,7 +63,7 @@ async fn test_fs() -> Result<()> {
         .into_string()
         .unwrap();
 
-    let firestore = FirestoreDb::with_options_service_account_key_file(
+    let db = FirestoreDb::with_options_service_account_key_file(
         FirestoreDbOptions::new(project_id).with_database_id("sdb-database2".into()),
         ".key.json".into(),
     )
@@ -71,7 +71,7 @@ async fn test_fs() -> Result<()> {
 
     println!("listing collection ids");
 
-    let list = firestore
+    let list = db
         .list_collection_ids(FirestoreListCollectionIdsParams {
             parent: None,
             page_size: 100,
@@ -84,6 +84,19 @@ async fn test_fs() -> Result<()> {
     for collection_id in list.collection_ids {
         println!("collection_id: {}", collection_id);
     }
+
+    let game = games.values().next().unwrap();
+
+    let _result = db
+        .fluent()
+        .insert()
+        .into("test")
+        .generate_document_id()
+        .object(game)
+        .execute::<Game>()
+        .await?;
+
+    println!("result: {:?}", _result);
 
     Ok(())
 }
