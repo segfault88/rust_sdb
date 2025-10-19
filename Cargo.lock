@@ -1756,6 +1756,7 @@ dependencies = [
  "bincode",
  "clap",
  "firestore",
+ "futures",
  "indicatif",
  "rand 0.9.2",
  "rayon",

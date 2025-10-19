@@ -2,6 +2,7 @@ use anyhow::Result;
 use bincode::{config::standard, decode_from_std_read, encode_into_std_write};
 use clap::{Parser, Subcommand};
 use firestore::*;
+use futures::stream::{self, StreamExt};
 use game_data::Game;
 use game_data::GameMap;
 use indicatif::ProgressBar;
@@ -89,20 +90,40 @@ async fn test_fs() -> Result<()> {
         println!("collection_id: {}", collection_id);
     }
 
-    let bar = ProgressBar::new(games.len() as u64);
+    // Set steam_app_id for all games
     for (id, game) in games.iter_mut() {
         game.steam_app_id = Some(*id);
-
-        bar.inc(1);
-        let _result = db
-            .fluent()
-            .insert()
-            .into("test")
-            .generate_document_id()
-            .object(game)
-            .execute::<Game>()
-            .await?;
     }
+
+    let bar = ProgressBar::new(games.len() as u64);
+    let games_vec: Vec<_> = games.into_values().collect();
+
+    // Process in parallel with concurrency limit
+    const CONCURRENT_REQUESTS: usize = 100;
+
+    stream::iter(games_vec)
+        .map(|game| {
+            let db = db.clone();
+            let bar = bar.clone();
+            async move {
+                let result = db
+                    .fluent()
+                    .insert()
+                    .into("test")
+                    .generate_document_id()
+                    .object(&game)
+                    .execute::<Game>()
+                    .await;
+                bar.inc(1);
+                result
+            }
+        })
+        .buffer_unordered(CONCURRENT_REQUESTS)
+        .collect::<Vec<_>>()
+        .await
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()?;
+
     bar.finish();
 
     Ok(())
