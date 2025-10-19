@@ -110,7 +110,7 @@ async fn test_fs() -> Result<()> {
                     .fluent()
                     .insert()
                     .into("test")
-                    .generate_document_id()
+                    .document_id(&game.steam_app_id.unwrap_or(0).to_string())
                     .object(&game)
                     .execute::<Game>()
                     .await;
